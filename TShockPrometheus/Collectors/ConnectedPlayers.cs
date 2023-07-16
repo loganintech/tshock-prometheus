@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Prometheus;
 using TerrariaApi.Server;
 using TShockAPI;
+using System.Text.RegularExpressions;
 
 namespace TShockPrometheus.Collectors {
   class ConnectedPlayers : BaseCollector {
@@ -41,6 +42,14 @@ namespace TShockPrometheus.Collectors {
 
     private Dictionary<string, Gauge> playersToGague = new Dictionary<string, Gauge>();
 
+    private string labelNameFromPlayerName(string playerName)
+    {
+      // Replace all non-alphanumeric characters with an underscore
+      string pattern = "[^a-zA-Z0-9]";
+      string replacement = "_";
+      return Regex.Replace(playerName, pattern, replacement);
+    }
+
     #region Hooks
     /// <summary>
     /// Called when a player joins the server
@@ -55,15 +64,16 @@ namespace TShockPrometheus.Collectors {
         return;
       }
 
-      Gauge gauge = playersToGague[player.Name];
-      if (gauge != null)
+      Gauge gauge;
+      bool hasGauge = playersToGague.TryGetValue(player.Name, out gauge);
+      if (hasGauge && gauge != null)
       {
         gauge.Set(1);
         return;
       }
-      
-      Gauge newGauge = Metrics.CreateGauge("connected_player", "connected player", player.Name);
-      newGauge.Set(1);
+
+      Gauge newGauge = Metrics.CreateGauge(Prefix("connected_player"), "connected player", "name");
+      newGauge.WithLabels(labelNameFromPlayerName(player.Name)).Set(1);
       playersToGague.Add(player.Name, newGauge);
     }
 
@@ -76,9 +86,12 @@ namespace TShockPrometheus.Collectors {
       collector.Dec(1);
       
       TSPlayer player = TShock.Players[args.Who];
-      Gauge gauge = playersToGague[player.Name];
-
-      gauge?.Set(0);
+      Gauge gauge;
+      bool hasGauge = playersToGague.TryGetValue(player.Name, out gauge);
+      if (hasGauge && gauge != null)
+      {
+        gauge?.WithLabels(labelNameFromPlayerName(player.Name)).Set(0);
+      }
     }
     #endregion
   }

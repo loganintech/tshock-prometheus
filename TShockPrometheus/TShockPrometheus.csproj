@@ -15,13 +15,15 @@
     <NeutralLanguage>en-UK</NeutralLanguage>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Configurations>Debug;Release</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="prometheus-net" Version="4.2.0">
       <IncludeAssets>all</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="TShock" Version="5.*" >
+    <PackageReference Include="TShock" Version="5.*">
       <IncludeAssets>compile</IncludeAssets> <!-- Don't copy TShock deps to output folder -->
     </PackageReference>
   </ItemGroup>
