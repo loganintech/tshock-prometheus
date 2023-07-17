@@ -13,6 +13,8 @@ namespace TShockPrometheus.Collectors {
     /// instance.
     /// </summary>
     static readonly Gauge collector = Metrics.CreateGauge(Prefix("connected_player_count"), "connected players");
+    static readonly Gauge playerGauge = Metrics.CreateGauge(Prefix("connected_player"), "connected player", "name");
+
 
     public ConnectedPlayers (TerrariaPlugin plugin) : base(plugin) {
     }
@@ -39,9 +41,7 @@ namespace TShockPrometheus.Collectors {
       enabled = false;
     }
     #endregion
-
-    private Dictionary<string, Gauge> playersToGague = new Dictionary<string, Gauge>();
-
+    
     private string labelNameFromPlayerName(string playerName)
     {
       // Replace all non-alphanumeric characters with an underscore
@@ -64,22 +64,7 @@ namespace TShockPrometheus.Collectors {
         return;
       }
 
-      Gauge gauge;
-      bool hasGauge = playersToGague.TryGetValue(player.Name, out gauge);
-      if (hasGauge && gauge != null)
-      {
-        gauge.Set(1);
-        return;
-      }
-
-      if (labelNameFromPlayerName(player.Name).Length == 0)
-      {
-        return;
-      }
-
-      Gauge newGauge = Metrics.CreateGauge(Prefix("connected_player"), "connected player", "name");
-      newGauge.WithLabels(labelNameFromPlayerName(player.Name)).Set(1);
-      playersToGague.Add(player.Name, newGauge);
+      playerGauge.WithLabels(labelNameFromPlayerName(player.Name)).Set(1);
     }
 
     /// <summary>
@@ -91,13 +76,7 @@ namespace TShockPrometheus.Collectors {
       collector.Dec(1);
       
       TSPlayer player = TShock.Players[args.Who];
-      Gauge gauge;
-      bool hasGauge = playersToGague.TryGetValue(player.Name, out gauge);
-      if (hasGauge && gauge != null)
-      {
-        gauge.Set(0);
-        gauge.RemoveLabelled(labelNameFromPlayerName(player.Name));
-      }
+      playerGauge.WithLabels(labelNameFromPlayerName(player.Name)).Set(0);
     }
     #endregion
   }
