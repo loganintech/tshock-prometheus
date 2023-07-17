@@ -72,6 +72,11 @@ namespace TShockPrometheus.Collectors {
         return;
       }
 
+      if (labelNameFromPlayerName(player.Name).Length == 0)
+      {
+        return;
+      }
+
       Gauge newGauge = Metrics.CreateGauge(Prefix("connected_player"), "connected player", "name");
       newGauge.WithLabels(labelNameFromPlayerName(player.Name)).Set(1);
       playersToGague.Add(player.Name, newGauge);
@@ -90,7 +95,8 @@ namespace TShockPrometheus.Collectors {
       bool hasGauge = playersToGague.TryGetValue(player.Name, out gauge);
       if (hasGauge && gauge != null)
       {
-        gauge?.WithLabels(labelNameFromPlayerName(player.Name)).Set(0);
+        gauge.Set(0);
+        gauge.RemoveLabelled(labelNameFromPlayerName(player.Name));
       }
     }
     #endregion
